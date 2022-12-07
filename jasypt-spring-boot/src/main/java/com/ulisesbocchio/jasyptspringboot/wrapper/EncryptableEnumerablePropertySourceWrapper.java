@@ -10,27 +10,31 @@ import org.springframework.core.env.PropertySource;
 /**
  * @author Ulises Bocchio
  */
-public class EncryptableEnumerablePropertySourceWrapper<T> extends EnumerablePropertySource<T> implements EncryptablePropertySource<T> {
-    private final CachingDelegateEncryptablePropertySource<T> encryptableDelegate;
+public class EncryptableEnumerablePropertySourceWrapper<T> extends EnumerablePropertySource<T>
+		implements EncryptablePropertySource<T> {
 
-    public EncryptableEnumerablePropertySourceWrapper(EnumerablePropertySource<T> delegate, EncryptablePropertyResolver resolver, EncryptablePropertyFilter filter) {
-        super(delegate.getName(), delegate.getSource());
-        encryptableDelegate = new CachingDelegateEncryptablePropertySource<>(delegate, resolver, filter);
-    }
+	private final CachingDelegateEncryptablePropertySource<T> encryptableDelegate;
 
-    @Override
-    public Object getProperty(String name) {
-        return encryptableDelegate.getProperty(name);
-    }
+	public EncryptableEnumerablePropertySourceWrapper(EnumerablePropertySource<T> delegate,
+			EncryptablePropertyResolver resolver, EncryptablePropertyFilter filter) {
+		super(delegate.getName(), delegate.getSource());
+		encryptableDelegate = new CachingDelegateEncryptablePropertySource<>(delegate, resolver, filter);
+	}
 
-    @Override
-    public PropertySource<T> getDelegate() {
-        return encryptableDelegate;
-    }
+	@Override
+	public Object getProperty(String name) {
+		return encryptableDelegate.getProperty(name);
+	}
 
-    @SuppressWarnings("rawtypes")
-    @Override
-    public String[] getPropertyNames() {
-        return ((EnumerablePropertySource) encryptableDelegate.getDelegate()).getPropertyNames();
-    }
+	@Override
+	public PropertySource<T> getDelegate() {
+		return encryptableDelegate;
+	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public String[] getPropertyNames() {
+		return ((EnumerablePropertySource) encryptableDelegate.getDelegate()).getPropertyNames();
+	}
+
 }

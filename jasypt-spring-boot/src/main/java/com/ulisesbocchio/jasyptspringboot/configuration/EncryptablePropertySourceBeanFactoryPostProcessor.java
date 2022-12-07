@@ -46,116 +46,136 @@ import static com.ulisesbocchio.jasyptspringboot.configuration.EncryptableProper
 @Slf4j
 public class EncryptablePropertySourceBeanFactoryPostProcessor implements BeanFactoryPostProcessor, Ordered {
 
-    private static final String CONFIGURATION_CLASS_ATTRIBUTE =
-            Conventions.getQualifiedAttributeName(ConfigurationClassPostProcessor.class, "configurationClass");
-    private ConfigurableEnvironment env;
+	private static final String CONFIGURATION_CLASS_ATTRIBUTE = Conventions
+			.getQualifiedAttributeName(ConfigurationClassPostProcessor.class, "configurationClass");
 
-    public EncryptablePropertySourceBeanFactoryPostProcessor(ConfigurableEnvironment env) {
-        this.env = env;
-    }
+	private ConfigurableEnvironment env;
 
-    @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        ResourceLoader ac = new DefaultResourceLoader();
-        MutablePropertySources propertySources = env.getPropertySources();
-        Stream<AnnotationAttributes> encryptablePropertySourcesMetadata = getEncryptablePropertySourcesMetadata(beanFactory);
-        EncryptablePropertyResolver propertyResolver = beanFactory.getBean(RESOLVER_BEAN_NAME, EncryptablePropertyResolver.class);
-        EncryptablePropertyFilter propertyFilter = beanFactory.getBean(FILTER_BEAN_NAME, EncryptablePropertyFilter.class);
-        List<PropertySourceLoader> loaders = initPropertyLoaders();
-        encryptablePropertySourcesMetadata.forEach(eps -> loadEncryptablePropertySource(eps, env, ac, propertyResolver, propertyFilter, propertySources, loaders));
-    }
+	public EncryptablePropertySourceBeanFactoryPostProcessor(ConfigurableEnvironment env) {
+		this.env = env;
+	}
 
-    private List<PropertySourceLoader> initPropertyLoaders() {
-        return SpringFactoriesLoader.loadFactories(PropertySourceLoader.class, getClass().getClassLoader());
-    }
+	@Override
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		ResourceLoader ac = new DefaultResourceLoader();
+		MutablePropertySources propertySources = env.getPropertySources();
+		Stream<AnnotationAttributes> encryptablePropertySourcesMetadata = getEncryptablePropertySourcesMetadata(
+				beanFactory);
+		EncryptablePropertyResolver propertyResolver = beanFactory.getBean(RESOLVER_BEAN_NAME,
+				EncryptablePropertyResolver.class);
+		EncryptablePropertyFilter propertyFilter = beanFactory.getBean(FILTER_BEAN_NAME,
+				EncryptablePropertyFilter.class);
+		List<PropertySourceLoader> loaders = initPropertyLoaders();
+		encryptablePropertySourcesMetadata.forEach(eps -> loadEncryptablePropertySource(eps, env, ac, propertyResolver,
+				propertyFilter, propertySources, loaders));
+	}
 
-    private void loadEncryptablePropertySource(AnnotationAttributes encryptablePropertySource, ConfigurableEnvironment env, ResourceLoader resourceLoader, EncryptablePropertyResolver resolver, EncryptablePropertyFilter propertyFilter, MutablePropertySources propertySources, List<PropertySourceLoader> loaders) throws BeansException {
-        try {
-            log.info("Loading Encryptable Property Source '{}'", encryptablePropertySource.getString("name"));
-            PropertySource ps = createPropertySource(encryptablePropertySource, env, resourceLoader, resolver, propertyFilter, loaders);
-            propertySources.addLast(ps);
-            log.info("Created Encryptable Property Source '{}' from locations: {}", ps.getName(), Arrays.asList(encryptablePropertySource.getStringArray("value")));
-        } catch (Exception e) {
-            throw new ApplicationContextException("Exception Creating PropertySource", e);
-        }
-    }
+	private List<PropertySourceLoader> initPropertyLoaders() {
+		return SpringFactoriesLoader.loadFactories(PropertySourceLoader.class, getClass().getClassLoader());
+	}
 
-    private PropertySource createPropertySource(AnnotationAttributes attributes, ConfigurableEnvironment environment, ResourceLoader resourceLoader, EncryptablePropertyResolver resolver, EncryptablePropertyFilter propertyFilter, List<PropertySourceLoader> loaders) throws Exception {
-        String name = generateName(attributes.getString("name"));
-        String[] locations = attributes.getStringArray("value");
-        boolean ignoreResourceNotFound = attributes.getBoolean("ignoreResourceNotFound");
-        CompositePropertySource compositePropertySource = new OriginTrackedCompositePropertySource(name);
-        Assert.isTrue(locations.length > 0, "At least one @PropertySource(value) location is required");
-        for (String location : locations) {
-            String resolvedLocation = environment.resolveRequiredPlaceholders(location);
-            Resource resource = resourceLoader.getResource(resolvedLocation);
-            if (!resource.exists()) {
-                if (!ignoreResourceNotFound) {
-                    throw new IllegalStateException(String.format("Encryptable Property Source '%s' from location: %s Not Found", name, resolvedLocation));
-                } else {
-                    log.info("Ignoring NOT FOUND Encryptable Property Source '{}' from locations: {}", name, resolvedLocation);
-                }
-            } else {
-                String actualName = name + "#" + resolvedLocation;
-                loadPropertySource(loaders, resource, actualName)
-                        .ifPresent(psources -> psources.forEach(compositePropertySource::addPropertySource));
-            }
-        }
-        return new EncryptableEnumerablePropertySourceWrapper<>(compositePropertySource, resolver, propertyFilter);
-    }
+	private void loadEncryptablePropertySource(AnnotationAttributes encryptablePropertySource,
+			ConfigurableEnvironment env, ResourceLoader resourceLoader, EncryptablePropertyResolver resolver,
+			EncryptablePropertyFilter propertyFilter, MutablePropertySources propertySources,
+			List<PropertySourceLoader> loaders) throws BeansException {
+		try {
+			log.info("Loading Encryptable Property Source '{}'", encryptablePropertySource.getString("name"));
+			PropertySource ps = createPropertySource(encryptablePropertySource, env, resourceLoader, resolver,
+					propertyFilter, loaders);
+			propertySources.addLast(ps);
+			log.info("Created Encryptable Property Source '{}' from locations: {}", ps.getName(),
+					Arrays.asList(encryptablePropertySource.getStringArray("value")));
+		}
+		catch (Exception e) {
+			throw new ApplicationContextException("Exception Creating PropertySource", e);
+		}
+	}
 
-    private String generateName(String name) {
-        return !StringUtils.isEmpty(name) ? name : "EncryptedPropertySource#" + System.currentTimeMillis();
-    }
+	private PropertySource createPropertySource(AnnotationAttributes attributes, ConfigurableEnvironment environment,
+			ResourceLoader resourceLoader, EncryptablePropertyResolver resolver,
+			EncryptablePropertyFilter propertyFilter, List<PropertySourceLoader> loaders) throws Exception {
+		String name = generateName(attributes.getString("name"));
+		String[] locations = attributes.getStringArray("value");
+		boolean ignoreResourceNotFound = attributes.getBoolean("ignoreResourceNotFound");
+		CompositePropertySource compositePropertySource = new OriginTrackedCompositePropertySource(name);
+		Assert.isTrue(locations.length > 0, "At least one @PropertySource(value) location is required");
+		for (String location : locations) {
+			String resolvedLocation = environment.resolveRequiredPlaceholders(location);
+			Resource resource = resourceLoader.getResource(resolvedLocation);
+			if (!resource.exists()) {
+				if (!ignoreResourceNotFound) {
+					throw new IllegalStateException(String.format(
+							"Encryptable Property Source '%s' from location: %s Not Found", name, resolvedLocation));
+				}
+				else {
+					log.info("Ignoring NOT FOUND Encryptable Property Source '{}' from locations: {}", name,
+							resolvedLocation);
+				}
+			}
+			else {
+				String actualName = name + "#" + resolvedLocation;
+				loadPropertySource(loaders, resource, actualName)
+						.ifPresent(psources -> psources.forEach(compositePropertySource::addPropertySource));
+			}
+		}
+		return new EncryptableEnumerablePropertySourceWrapper<>(compositePropertySource, resolver, propertyFilter);
+	}
 
-    private Stream<AnnotationAttributes> getEncryptablePropertySourcesMetadata(ConfigurableListableBeanFactory beanFactory) {
-        return getBeanDefinitionsForAnnotation(beanFactory, com.ulisesbocchio.jasyptspringboot.annotation.EncryptablePropertySource.class, EncryptablePropertySources.class);
-    }
+	private String generateName(String name) {
+		return !StringUtils.isEmpty(name) ? name : "EncryptedPropertySource#" + System.currentTimeMillis();
+	}
 
-    private Stream<AnnotationAttributes> getBeanDefinitionsForAnnotation(ConfigurableListableBeanFactory bf, Class<? extends Annotation> annotation, Class<? extends Annotation> repeatable) {
-        return Stream.concat(Arrays.stream(bf.getBeanNamesForAnnotation(annotation)), Arrays.stream(bf.getBeanNamesForAnnotation(repeatable)))
-                .distinct()
-                .map(bf::getBeanDefinition)
-                .filter(bd -> bd instanceof AnnotatedBeanDefinition)
-                .map(bd -> (AnnotatedBeanDefinition) bd)
-                .filter(bd -> bd.getAttribute(CONFIGURATION_CLASS_ATTRIBUTE) != null && bd instanceof AbstractBeanDefinition)
-                .map(AnnotatedBeanDefinition::getMetadata)
-                .filter(am -> am.hasAnnotation(annotation.getName()) || am.hasAnnotation(repeatable.getName()))
-                .flatMap(am -> Optional
-                        .ofNullable((AnnotationAttributes) am.getAnnotationAttributes(annotation.getName()))
-                        .map(Stream::of)
-                        .orElseGet(() -> Optional
-                                .ofNullable((AnnotationAttributes) am.getAnnotationAttributes(repeatable.getName()))
-                                .map(ram -> Arrays.stream(ram.getAnnotationArray("value")))
-                                .orElseGet(Stream::empty)));
-    }
+	private Stream<AnnotationAttributes> getEncryptablePropertySourcesMetadata(
+			ConfigurableListableBeanFactory beanFactory) {
+		return getBeanDefinitionsForAnnotation(beanFactory,
+				com.ulisesbocchio.jasyptspringboot.annotation.EncryptablePropertySource.class,
+				EncryptablePropertySources.class);
+	}
 
-    private Optional<List<PropertySource<?>>> loadPropertySource(List<PropertySourceLoader> loaders, Resource resource, String sourceName) throws IOException {
-        return Optional.of(resource)
-                .filter(this::isFile)
-                .flatMap(res -> loaders.stream()
-                        .filter(loader -> canLoadFileExtension(loader, resource))
-                        .findFirst()
-                        .map(loader -> load(loader, sourceName, resource)));
-    }
+	private Stream<AnnotationAttributes> getBeanDefinitionsForAnnotation(ConfigurableListableBeanFactory bf,
+			Class<? extends Annotation> annotation, Class<? extends Annotation> repeatable) {
+		return Stream
+				.concat(Arrays.stream(bf.getBeanNamesForAnnotation(annotation)),
+						Arrays.stream(bf.getBeanNamesForAnnotation(repeatable)))
+				.distinct().map(bf::getBeanDefinition).filter(bd -> bd instanceof AnnotatedBeanDefinition)
+				.map(bd -> (AnnotatedBeanDefinition) bd)
+				.filter(bd -> bd.getAttribute(CONFIGURATION_CLASS_ATTRIBUTE) != null
+						&& bd instanceof AbstractBeanDefinition)
+				.map(AnnotatedBeanDefinition::getMetadata)
+				.filter(am -> am.hasAnnotation(annotation.getName()) || am.hasAnnotation(repeatable.getName()))
+				.flatMap(am -> Optional
+						.ofNullable((AnnotationAttributes) am.getAnnotationAttributes(annotation.getName()))
+						.map(Stream::of)
+						.orElseGet(() -> Optional
+								.ofNullable((AnnotationAttributes) am.getAnnotationAttributes(repeatable.getName()))
+								.map(ram -> Arrays.stream(ram.getAnnotationArray("value"))).orElseGet(Stream::empty)));
+	}
 
-    @SneakyThrows
-    private List<PropertySource<?>> load(PropertySourceLoader loader, String sourceName, Resource resource) {
-        return loader.load(sourceName, resource);
-    }
+	private Optional<List<PropertySource<?>>> loadPropertySource(List<PropertySourceLoader> loaders, Resource resource,
+			String sourceName) throws IOException {
+		return Optional.of(resource).filter(this::isFile)
+				.flatMap(res -> loaders.stream().filter(loader -> canLoadFileExtension(loader, resource)).findFirst()
+						.map(loader -> load(loader, sourceName, resource)));
+	}
 
-    private boolean canLoadFileExtension(PropertySourceLoader loader, Resource resource) {
-        return Arrays.stream(loader.getFileExtensions())
-                .anyMatch(extension -> Objects.requireNonNull(resource.getFilename()).toLowerCase().endsWith("." + extension.toLowerCase()));
-    }
+	@SneakyThrows
+	private List<PropertySource<?>> load(PropertySourceLoader loader, String sourceName, Resource resource) {
+		return loader.load(sourceName, resource);
+	}
 
-    private boolean isFile(Resource resource) {
-        return resource != null && resource.exists() && StringUtils
-                .hasText(StringUtils.getFilenameExtension(resource.getFilename()));
-    }
+	private boolean canLoadFileExtension(PropertySourceLoader loader, Resource resource) {
+		return Arrays.stream(loader.getFileExtensions()).anyMatch(extension -> Objects
+				.requireNonNull(resource.getFilename()).toLowerCase().endsWith("." + extension.toLowerCase()));
+	}
 
-    @Override
-    public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE - 100;
-    }
+	private boolean isFile(Resource resource) {
+		return resource != null && resource.exists()
+				&& StringUtils.hasText(StringUtils.getFilenameExtension(resource.getFilename()));
+	}
+
+	@Override
+	public int getOrder() {
+		return Ordered.LOWEST_PRECEDENCE - 100;
+	}
+
 }

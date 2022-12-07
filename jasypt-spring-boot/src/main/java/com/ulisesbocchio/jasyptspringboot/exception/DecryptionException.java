@@ -5,13 +5,14 @@ package com.ulisesbocchio.jasyptspringboot.exception;
  */
 public class DecryptionException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    public DecryptionException(final String message) {
-        super(message);
-    }
+	public DecryptionException(final String message) {
+		super(message);
+	}
 
-    public DecryptionException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
+	public DecryptionException(final String message, final Throwable cause) {
+		super(message, cause);
+	}
+
 }

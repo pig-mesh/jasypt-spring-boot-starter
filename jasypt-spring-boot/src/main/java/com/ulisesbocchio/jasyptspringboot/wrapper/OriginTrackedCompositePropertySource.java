@@ -16,7 +16,7 @@ public class OriginTrackedCompositePropertySource extends CompositePropertySourc
 	}
 
 	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Origin getOrigin(String name) {
 		for (PropertySource<?> propertySource : getPropertySources()) {
 			if (propertySource instanceof OriginLookup) {

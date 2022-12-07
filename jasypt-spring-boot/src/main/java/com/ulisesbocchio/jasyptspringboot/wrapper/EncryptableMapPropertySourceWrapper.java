@@ -15,22 +15,25 @@ import java.util.Map;
 /**
  * @author Ulises Bocchio
  */
-public class EncryptableMapPropertySourceWrapper extends MapPropertySource implements EncryptablePropertySource<Map<String, Object>> {
+public class EncryptableMapPropertySourceWrapper extends MapPropertySource
+		implements EncryptablePropertySource<Map<String, Object>> {
 
-    private final CachingDelegateEncryptablePropertySource<Map<String, Object>> encryptableDelegate;
+	private final CachingDelegateEncryptablePropertySource<Map<String, Object>> encryptableDelegate;
 
-    public EncryptableMapPropertySourceWrapper(MapPropertySource delegate, EncryptablePropertyResolver resolver, EncryptablePropertyFilter filter) {
-        super(delegate.getName(), delegate.getSource());
-        encryptableDelegate = new CachingDelegateEncryptablePropertySource<>(delegate, resolver, filter);
-    }
+	public EncryptableMapPropertySourceWrapper(MapPropertySource delegate, EncryptablePropertyResolver resolver,
+			EncryptablePropertyFilter filter) {
+		super(delegate.getName(), delegate.getSource());
+		encryptableDelegate = new CachingDelegateEncryptablePropertySource<>(delegate, resolver, filter);
+	}
 
-    @Override
-    public Object getProperty(String name) {
-        return encryptableDelegate.getProperty(name);
-    }
+	@Override
+	public Object getProperty(String name) {
+		return encryptableDelegate.getProperty(name);
+	}
 
-    @Override
-    public PropertySource<Map<String, Object>> getDelegate() {
-        return encryptableDelegate;
-    }
+	@Override
+	public PropertySource<Map<String, Object>> getDelegate() {
+		return encryptableDelegate;
+	}
+
 }

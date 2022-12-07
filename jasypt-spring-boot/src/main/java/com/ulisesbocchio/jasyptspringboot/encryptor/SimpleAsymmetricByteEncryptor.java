@@ -8,30 +8,35 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 
 /**
- * Vanilla implementation of an asymmetric encryptor that relies on {@link AsymmetricCryptography}
- * Keys are lazily loaded from {@link SimpleAsymmetricConfig}
+ * Vanilla implementation of an asymmetric encryptor that relies on
+ * {@link AsymmetricCryptography} Keys are lazily loaded from
+ * {@link SimpleAsymmetricConfig}
  *
  * @author Ulises Bocchio
  */
 public class SimpleAsymmetricByteEncryptor implements ByteEncryptor {
 
-    private final AsymmetricCryptography crypto;
-    private final Singleton<PublicKey> publicKey;
-    private final Singleton<PrivateKey> privateKey;
+	private final AsymmetricCryptography crypto;
 
-    public SimpleAsymmetricByteEncryptor(SimpleAsymmetricConfig config) {
-        crypto = new AsymmetricCryptography(config.getResourceLoader());
-        privateKey = Singleton.fromLazy(crypto::getPrivateKey, config::loadPrivateKeyResource, config::getPrivateKeyFormat);
-        publicKey = Singleton.fromLazy(crypto::getPublicKey, config::loadPublicKeyResource, config::getPublicKeyFormat);
-    }
+	private final Singleton<PublicKey> publicKey;
 
-    @Override
-    public byte[] encrypt(byte[] message) {
-        return this.crypto.encrypt(message, publicKey.get());
-    }
+	private final Singleton<PrivateKey> privateKey;
 
-    @Override
-    public byte[] decrypt(byte[] encryptedMessage) {
-        return this.crypto.decrypt(encryptedMessage, privateKey.get());
-    }
+	public SimpleAsymmetricByteEncryptor(SimpleAsymmetricConfig config) {
+		crypto = new AsymmetricCryptography(config.getResourceLoader());
+		privateKey = Singleton.fromLazy(crypto::getPrivateKey, config::loadPrivateKeyResource,
+				config::getPrivateKeyFormat);
+		publicKey = Singleton.fromLazy(crypto::getPublicKey, config::loadPublicKeyResource, config::getPublicKeyFormat);
+	}
+
+	@Override
+	public byte[] encrypt(byte[] message) {
+		return this.crypto.encrypt(message, publicKey.get());
+	}
+
+	@Override
+	public byte[] decrypt(byte[] encryptedMessage) {
+		return this.crypto.decrypt(encryptedMessage, privateKey.get());
+	}
+
 }

@@ -14,35 +14,38 @@ import java.util.Map;
 /**
  * @author Tomas Tulka (@ttulka)
  */
-public class EncryptableSystemEnvironmentPropertySourceWrapper extends SystemEnvironmentPropertySource implements EncryptablePropertySource<Map<String, Object>> {
+public class EncryptableSystemEnvironmentPropertySourceWrapper extends SystemEnvironmentPropertySource
+		implements EncryptablePropertySource<Map<String, Object>> {
 
-    private final CachingDelegateEncryptablePropertySource<Map<String, Object>> encryptableDelegate;
+	private final CachingDelegateEncryptablePropertySource<Map<String, Object>> encryptableDelegate;
 
-    public EncryptableSystemEnvironmentPropertySourceWrapper(SystemEnvironmentPropertySource delegate, EncryptablePropertyResolver resolver, EncryptablePropertyFilter filter) {
-        super(delegate.getName(), delegate.getSource());
-        encryptableDelegate = new CachingDelegateEncryptablePropertySource<>(delegate, resolver, filter);
-    }
+	public EncryptableSystemEnvironmentPropertySourceWrapper(SystemEnvironmentPropertySource delegate,
+			EncryptablePropertyResolver resolver, EncryptablePropertyFilter filter) {
+		super(delegate.getName(), delegate.getSource());
+		encryptableDelegate = new CachingDelegateEncryptablePropertySource<>(delegate, resolver, filter);
+	}
 
-    @Override
-    public Object getProperty(String name) {
-        return encryptableDelegate.getProperty(name);
-    }
+	@Override
+	public Object getProperty(String name) {
+		return encryptableDelegate.getProperty(name);
+	}
 
-    @Override
-    public PropertySource<Map<String, Object>> getDelegate() {
-        return encryptableDelegate;
-    }
+	@Override
+	public PropertySource<Map<String, Object>> getDelegate() {
+		return encryptableDelegate;
+	}
 
-    @Override
-    public Origin getOrigin(String key) {
-        Origin fromSuper = EncryptablePropertySource.super.getOrigin(key);
-        if (fromSuper != null) {
-            return fromSuper;
-        }
-        String property = resolvePropertyName(key);
-        if (super.containsProperty(property)) {
-            return new SystemEnvironmentOrigin(property);
-        }
-        return null;
-    }
+	@Override
+	public Origin getOrigin(String key) {
+		Origin fromSuper = EncryptablePropertySource.super.getOrigin(key);
+		if (fromSuper != null) {
+			return fromSuper;
+		}
+		String property = resolvePropertyName(key);
+		if (super.containsProperty(property)) {
+			return new SystemEnvironmentOrigin(property);
+		}
+		return null;
+	}
+
 }

@@ -12,72 +12,75 @@ import org.springframework.core.env.StandardEnvironment;
 import java.util.Optional;
 
 /**
- * Need a copy of the environment without the Enhanced property sources to avoid circular dependencies.
+ * Need a copy of the environment without the Enhanced property sources to avoid circular
+ * dependencies.
  */
 public class EnvCopy {
-    StandardEnvironment copy;
 
-    public EnvCopy(final ConfigurableEnvironment environment) {
-        copy = new StandardEnvironment();
-        Optional
-                .ofNullable(environment instanceof EncryptableEnvironment ? ((EncryptableEnvironment) environment).getOriginalPropertySources() : environment.getPropertySources())
-                .ifPresent(sources -> sources.forEach(this::addLast));
-    }
+	StandardEnvironment copy;
 
-    @SuppressWarnings({"rawtypes"})
-    private PropertySource<?> getOriginal(PropertySource<?> propertySource) {
-        return propertySource instanceof EncryptablePropertySource
-                ? ((EncryptablePropertySource) propertySource).getDelegate()
-                : propertySource;
-    }
+	public EnvCopy(final ConfigurableEnvironment environment) {
+		copy = new StandardEnvironment();
+		Optional.ofNullable(environment instanceof EncryptableEnvironment
+				? ((EncryptableEnvironment) environment).getOriginalPropertySources()
+				: environment.getPropertySources()).ifPresent(sources -> sources.forEach(this::addLast));
+	}
 
-    public boolean isAllowed(PropertySource<?> propertySource) {
-        final PropertySource<?> original = getOriginal(propertySource);
-        return !original.getClass().getName().equals("org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource");
-    }
+	@SuppressWarnings({ "rawtypes" })
+	private PropertySource<?> getOriginal(PropertySource<?> propertySource) {
+		return propertySource instanceof EncryptablePropertySource
+				? ((EncryptablePropertySource) propertySource).getDelegate() : propertySource;
+	}
 
-    public void addFirst(PropertySource<?> propertySource) {
-        if (isAllowed(propertySource)) {
-            final PropertySource<?> original = getOriginal(propertySource);
-            copy.getPropertySources().addFirst(original);
-        }
-    }
+	public boolean isAllowed(PropertySource<?> propertySource) {
+		final PropertySource<?> original = getOriginal(propertySource);
+		return !original.getClass().getName().equals(
+				"org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource");
+	}
 
-    public void addLast(PropertySource<?> propertySource) {
-        if (isAllowed(propertySource)) {
-            final PropertySource<?> original = getOriginal(propertySource);
-            copy.getPropertySources().addLast(original);
-        }
-    }
+	public void addFirst(PropertySource<?> propertySource) {
+		if (isAllowed(propertySource)) {
+			final PropertySource<?> original = getOriginal(propertySource);
+			copy.getPropertySources().addFirst(original);
+		}
+	}
 
-    public void addBefore(String relativePropertySourceName, PropertySource<?> propertySource) {
-        if (isAllowed(propertySource)) {
-            final PropertySource<?> original = getOriginal(propertySource);
-            copy.getPropertySources().addBefore(relativePropertySourceName, original);
-        }
-    }
+	public void addLast(PropertySource<?> propertySource) {
+		if (isAllowed(propertySource)) {
+			final PropertySource<?> original = getOriginal(propertySource);
+			copy.getPropertySources().addLast(original);
+		}
+	}
 
-    public void addAfter(String relativePropertySourceName, PropertySource<?> propertySource) {
-        if (isAllowed(propertySource)) {
-            final PropertySource<?> original = getOriginal(propertySource);
-            copy.getPropertySources().addAfter(relativePropertySourceName, original);
-        }
-    }
+	public void addBefore(String relativePropertySourceName, PropertySource<?> propertySource) {
+		if (isAllowed(propertySource)) {
+			final PropertySource<?> original = getOriginal(propertySource);
+			copy.getPropertySources().addBefore(relativePropertySourceName, original);
+		}
+	}
 
-    public void replace(String name, PropertySource<?> propertySource) {
-        if(isAllowed(propertySource)) {
-            if(copy.getPropertySources().contains(name)) {
-                final PropertySource<?> original = getOriginal(propertySource);
-                copy.getPropertySources().replace(name, original);
-            }
-        }
-    }
+	public void addAfter(String relativePropertySourceName, PropertySource<?> propertySource) {
+		if (isAllowed(propertySource)) {
+			final PropertySource<?> original = getOriginal(propertySource);
+			copy.getPropertySources().addAfter(relativePropertySourceName, original);
+		}
+	}
 
-    public PropertySource<?> remove(String name) {
-        return copy.getPropertySources().remove(name);
-    }
+	public void replace(String name, PropertySource<?> propertySource) {
+		if (isAllowed(propertySource)) {
+			if (copy.getPropertySources().contains(name)) {
+				final PropertySource<?> original = getOriginal(propertySource);
+				copy.getPropertySources().replace(name, original);
+			}
+		}
+	}
 
-    public ConfigurableEnvironment get() {
-        return copy;
-    }
+	public PropertySource<?> remove(String name) {
+		return copy.getPropertySources().remove(name);
+	}
+
+	public ConfigurableEnvironment get() {
+		return copy;
+	}
+
 }

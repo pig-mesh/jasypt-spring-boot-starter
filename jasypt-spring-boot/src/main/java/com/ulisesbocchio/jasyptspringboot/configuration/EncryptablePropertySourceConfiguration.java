@@ -9,12 +9,13 @@ import org.springframework.core.env.ConfigurableEnvironment;
  * @author Ulises Bocchio
  */
 @Configuration
-@Import({EncryptablePropertyResolverConfiguration.class, CachingConfiguration.class})
+@Import({ EncryptablePropertyResolverConfiguration.class, CachingConfiguration.class })
 public class EncryptablePropertySourceConfiguration {
 
-    @Bean
-    public static EncryptablePropertySourceBeanFactoryPostProcessor encryptablePropertySourceAnnotationPostProcessor(ConfigurableEnvironment env) {
-        return new EncryptablePropertySourceBeanFactoryPostProcessor(env);
-    }
+	@Bean
+	public static EncryptablePropertySourceBeanFactoryPostProcessor encryptablePropertySourceAnnotationPostProcessor(
+			ConfigurableEnvironment env) {
+		return new EncryptablePropertySourceBeanFactoryPostProcessor(env);
+	}
 
 }

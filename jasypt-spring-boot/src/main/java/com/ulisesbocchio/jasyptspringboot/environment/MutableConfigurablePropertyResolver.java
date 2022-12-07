@@ -11,16 +11,19 @@ import java.util.function.Function;
  */
 public class MutableConfigurablePropertyResolver implements ConfigurablePropertyResolver {
 
-    private final Function<MutablePropertySources, ConfigurablePropertyResolver> factory;
-    @Delegate
-    private ConfigurablePropertyResolver delegate;
+	private final Function<MutablePropertySources, ConfigurablePropertyResolver> factory;
 
-    public MutableConfigurablePropertyResolver(MutablePropertySources propertySources, Function<MutablePropertySources, ConfigurablePropertyResolver> factory) {
-        this.factory = factory;
-        this.delegate = factory.apply(propertySources);
-    }
+	@Delegate
+	private ConfigurablePropertyResolver delegate;
 
-    public void setPropertySources(MutablePropertySources propertySources) {
-        this.delegate = this.factory.apply(propertySources);
-    }
+	public MutableConfigurablePropertyResolver(MutablePropertySources propertySources,
+			Function<MutablePropertySources, ConfigurablePropertyResolver> factory) {
+		this.factory = factory;
+		this.delegate = factory.apply(propertySources);
+	}
+
+	public void setPropertySources(MutablePropertySources propertySources) {
+		this.delegate = this.factory.apply(propertySources);
+	}
+
 }

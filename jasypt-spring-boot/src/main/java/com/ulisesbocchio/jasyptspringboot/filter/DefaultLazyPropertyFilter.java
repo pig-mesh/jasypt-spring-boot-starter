@@ -15,37 +15,42 @@ import static com.ulisesbocchio.jasyptspringboot.util.Functional.tap;
 @Slf4j
 public class DefaultLazyPropertyFilter implements EncryptablePropertyFilter {
 
-    private Singleton<EncryptablePropertyFilter> singleton;
+	private Singleton<EncryptablePropertyFilter> singleton;
 
-    public DefaultLazyPropertyFilter(ConfigurableEnvironment e, String customFilterBeanName, boolean isCustom, BeanFactory bf) {
-        singleton = new Singleton<>(() ->
-                Optional.of(customFilterBeanName)
-                        .filter(bf::containsBean)
-                        .map(name -> (EncryptablePropertyFilter) bf.getBean(name))
-                        .map(tap(bean -> log.info("Found Custom Filter Bean {} with name: {}", bean, customFilterBeanName)))
-                        .orElseGet(() -> {
-                            if (isCustom) {
-                                throw new IllegalStateException(String.format("Property Filter custom Bean not found with name '%s'", customFilterBeanName));
-                            }
+	public DefaultLazyPropertyFilter(ConfigurableEnvironment e, String customFilterBeanName, boolean isCustom,
+			BeanFactory bf) {
+		singleton = new Singleton<>(() -> Optional.of(customFilterBeanName).filter(bf::containsBean)
+				.map(name -> (EncryptablePropertyFilter) bf.getBean(name))
+				.map(tap(bean -> log.info("Found Custom Filter Bean {} with name: {}", bean, customFilterBeanName)))
+				.orElseGet(() -> {
+					if (isCustom) {
+						throw new IllegalStateException(String
+								.format("Property Filter custom Bean not found with name '%s'", customFilterBeanName));
+					}
 
-                            log.info("Property Filter custom Bean not found with name '{}'. Initializing Default Property Filter", customFilterBeanName);
-                            return createDefault(e);
-                        }));
-    }
+					log.info(
+							"Property Filter custom Bean not found with name '{}'. Initializing Default Property Filter",
+							customFilterBeanName);
+					return createDefault(e);
+				}));
+	}
 
-    public DefaultLazyPropertyFilter(ConfigurableEnvironment environment) {
-        singleton = new Singleton<>(() -> createDefault(environment));
-    }
+	public DefaultLazyPropertyFilter(ConfigurableEnvironment environment) {
+		singleton = new Singleton<>(() -> createDefault(environment));
+	}
 
-    private DefaultPropertyFilter createDefault(ConfigurableEnvironment environment) {
-        JasyptEncryptorConfigurationProperties props = JasyptEncryptorConfigurationProperties.bindConfigProps(environment);
-        final JasyptEncryptorConfigurationProperties.PropertyConfigurationProperties.FilterConfigurationProperties filterConfig = props.getProperty().getFilter();
-        return new DefaultPropertyFilter(filterConfig.getIncludeSources(), filterConfig.getExcludeSources(),
-                filterConfig.getIncludeNames(), filterConfig.getExcludeNames());
-    }
+	private DefaultPropertyFilter createDefault(ConfigurableEnvironment environment) {
+		JasyptEncryptorConfigurationProperties props = JasyptEncryptorConfigurationProperties
+				.bindConfigProps(environment);
+		final JasyptEncryptorConfigurationProperties.PropertyConfigurationProperties.FilterConfigurationProperties filterConfig = props
+				.getProperty().getFilter();
+		return new DefaultPropertyFilter(filterConfig.getIncludeSources(), filterConfig.getExcludeSources(),
+				filterConfig.getIncludeNames(), filterConfig.getExcludeNames());
+	}
 
-    @Override
-    public boolean shouldInclude(PropertySource<?> source, String name) {
-        return singleton.get().shouldInclude(source, name);
-    }
+	@Override
+	public boolean shouldInclude(PropertySource<?> source, String name) {
+		return singleton.get().shouldInclude(source, name);
+	}
+
 }

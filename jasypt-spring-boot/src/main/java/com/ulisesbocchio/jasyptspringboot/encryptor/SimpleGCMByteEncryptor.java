@@ -23,90 +23,103 @@ import java.util.Base64;
 
 public class SimpleGCMByteEncryptor implements ByteEncryptor {
 
-    public static final int AES_KEY_SIZE = 256;
-    public static final int AES_KEY_PASSWORD_SALT_LENGTH = 16;
-    public static final int GCM_IV_LENGTH = 12;
-    public static final int GCM_TAG_LENGTH = 128;
-    private final Singleton<SecretKey> key;
-    private final String algorithm;
-    private final Singleton<IvGenerator> ivGenerator;
+	public static final int AES_KEY_SIZE = 256;
 
-    @SneakyThrows
-    @Override
-    public byte[] encrypt(byte[] message) {
-        byte[] iv = this.ivGenerator.get().generateIv(GCM_IV_LENGTH);
+	public static final int AES_KEY_PASSWORD_SALT_LENGTH = 16;
 
-        Cipher cipher = Cipher.getInstance(this.algorithm);
-        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-        cipher.init(Cipher.ENCRYPT_MODE, key.get(), gcmParameterSpec);
+	public static final int GCM_IV_LENGTH = 12;
 
-        byte[] cipherText = cipher.doFinal(message);
+	public static final int GCM_TAG_LENGTH = 128;
 
-        ByteBuffer byteBuffer = ByteBuffer.allocate(GCM_IV_LENGTH + cipherText.length);
-        byteBuffer.put(iv);
-        byteBuffer.put(cipherText);
-        return byteBuffer.array();
-    }
+	private final Singleton<SecretKey> key;
 
-    @SneakyThrows
-    @Override
-    public byte[] decrypt(byte[] encryptedMessage) {
-        Cipher cipher = Cipher.getInstance(this.algorithm);
-        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, encryptedMessage, 0, GCM_IV_LENGTH);
-        cipher.init(Cipher.DECRYPT_MODE, key.get(), gcmParameterSpec);
-        return cipher.doFinal(encryptedMessage, GCM_IV_LENGTH, encryptedMessage.length - GCM_IV_LENGTH);
-    }
+	private final String algorithm;
 
-    @SneakyThrows
-    private SecretKey loadSecretKey(SimpleGCMConfig config) {
-        if (config.getActualKey() != null) {
-            return config.getActualKey();
-        } else if (config.getSecretKeyPassword() != null) {
-            Assert.notNull(config.getSecretKeySaltGenerator(), "Secret key Salt must be provided with password");
-            Assert.notNull(config.getSecretKeyAlgorithm(), "Secret key algorithm must be provided with password");
-            return getAESKeyFromPassword(config.getSecretKeyPasswordChars(),  config.getSecretKeySaltGenerator(), config.getSecretKeyIterations(), config.getSecretKeyAlgorithm());
-        } else {
-            Assert.state(config.getSecretKey() != null || config.getSecretKeyResource() != null || config.getSecretKeyLocation() != null, "No key provided");
-            return loadSecretKeyFromResource(config.loadSecretKeyResource());
-        }
-    }
+	private final Singleton<IvGenerator> ivGenerator;
 
-    @SneakyThrows
-    private byte[] getResourceBytes(Resource resource) {
-        return FileCopyUtils.copyToByteArray(resource.getInputStream());
-    }
+	@SneakyThrows
+	@Override
+	public byte[] encrypt(byte[] message) {
+		byte[] iv = this.ivGenerator.get().generateIv(GCM_IV_LENGTH);
 
-    @SneakyThrows
-    private SecretKey loadSecretKeyFromResource(Resource resource) {
-        byte[] secretKeyBytes = Base64.getDecoder().decode(getResourceBytes(resource));
-        return new SecretKeySpec(secretKeyBytes, "AES");
-    }
+		Cipher cipher = Cipher.getInstance(this.algorithm);
+		GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+		cipher.init(Cipher.ENCRYPT_MODE, key.get(), gcmParameterSpec);
 
-    @SneakyThrows
-    public static SecretKey generateSecretKey() {
-        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-        SecureRandom random = SecureRandom.getInstanceStrong();
-        keyGenerator.init(AES_KEY_SIZE, random);
-        return keyGenerator.generateKey();
-    }
+		byte[] cipherText = cipher.doFinal(message);
 
-    @SneakyThrows
-    public static String generateBase64EncodedSecretKey() {
-        SecretKey key = generateSecretKey();
-        byte[] secretKeyBytes = key.getEncoded();
-        return Base64.getEncoder().encodeToString(secretKeyBytes);
-    }
+		ByteBuffer byteBuffer = ByteBuffer.allocate(GCM_IV_LENGTH + cipherText.length);
+		byteBuffer.put(iv);
+		byteBuffer.put(cipherText);
+		return byteBuffer.array();
+	}
 
-    @SneakyThrows
-    public static SecretKey getAESKeyFromPassword(char[] password, SaltGenerator saltGenerator, int iterations, String algorithm){
-        SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm);
-        KeySpec spec = new PBEKeySpec(password, saltGenerator.generateSalt(AES_KEY_PASSWORD_SALT_LENGTH), iterations, AES_KEY_SIZE);
-        return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
-    }
+	@SneakyThrows
+	@Override
+	public byte[] decrypt(byte[] encryptedMessage) {
+		Cipher cipher = Cipher.getInstance(this.algorithm);
+		GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, encryptedMessage, 0, GCM_IV_LENGTH);
+		cipher.init(Cipher.DECRYPT_MODE, key.get(), gcmParameterSpec);
+		return cipher.doFinal(encryptedMessage, GCM_IV_LENGTH, encryptedMessage.length - GCM_IV_LENGTH);
+	}
 
-    public SimpleGCMByteEncryptor(SimpleGCMConfig config) {
-        this.key = Singleton.from(this::loadSecretKey, config);
-        this.ivGenerator = Singleton.from(config::getActualIvGenerator);
-        this.algorithm = config.getAlgorithm();
-    }
+	@SneakyThrows
+	private SecretKey loadSecretKey(SimpleGCMConfig config) {
+		if (config.getActualKey() != null) {
+			return config.getActualKey();
+		}
+		else if (config.getSecretKeyPassword() != null) {
+			Assert.notNull(config.getSecretKeySaltGenerator(), "Secret key Salt must be provided with password");
+			Assert.notNull(config.getSecretKeyAlgorithm(), "Secret key algorithm must be provided with password");
+			return getAESKeyFromPassword(config.getSecretKeyPasswordChars(), config.getSecretKeySaltGenerator(),
+					config.getSecretKeyIterations(), config.getSecretKeyAlgorithm());
+		}
+		else {
+			Assert.state(config.getSecretKey() != null || config.getSecretKeyResource() != null
+					|| config.getSecretKeyLocation() != null, "No key provided");
+			return loadSecretKeyFromResource(config.loadSecretKeyResource());
+		}
+	}
+
+	@SneakyThrows
+	private byte[] getResourceBytes(Resource resource) {
+		return FileCopyUtils.copyToByteArray(resource.getInputStream());
+	}
+
+	@SneakyThrows
+	private SecretKey loadSecretKeyFromResource(Resource resource) {
+		byte[] secretKeyBytes = Base64.getDecoder().decode(getResourceBytes(resource));
+		return new SecretKeySpec(secretKeyBytes, "AES");
+	}
+
+	@SneakyThrows
+	public static SecretKey generateSecretKey() {
+		KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+		SecureRandom random = SecureRandom.getInstanceStrong();
+		keyGenerator.init(AES_KEY_SIZE, random);
+		return keyGenerator.generateKey();
+	}
+
+	@SneakyThrows
+	public static String generateBase64EncodedSecretKey() {
+		SecretKey key = generateSecretKey();
+		byte[] secretKeyBytes = key.getEncoded();
+		return Base64.getEncoder().encodeToString(secretKeyBytes);
+	}
+
+	@SneakyThrows
+	public static SecretKey getAESKeyFromPassword(char[] password, SaltGenerator saltGenerator, int iterations,
+			String algorithm) {
+		SecretKeyFactory factory = SecretKeyFactory.getInstance(algorithm);
+		KeySpec spec = new PBEKeySpec(password, saltGenerator.generateSalt(AES_KEY_PASSWORD_SALT_LENGTH), iterations,
+				AES_KEY_SIZE);
+		return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
+	}
+
+	public SimpleGCMByteEncryptor(SimpleGCMConfig config) {
+		this.key = Singleton.from(this::loadSecretKey, config);
+		this.ivGenerator = Singleton.from(config::getActualIvGenerator);
+		this.algorithm = config.getAlgorithm();
+	}
+
 }

@@ -10,8 +10,11 @@ import org.springframework.core.env.ConfigurableEnvironment;
 
 @Configuration
 public class CachingConfiguration {
-    @Bean
-    public RefreshScopeRefreshedEventListener refreshScopeRefreshedEventListener(ConfigurableEnvironment environment, EncryptablePropertySourceConverter converter, Singleton<JasyptEncryptorConfigurationProperties> config) {
-        return new RefreshScopeRefreshedEventListener(environment, converter, config.get());
-    }
+
+	@Bean
+	public RefreshScopeRefreshedEventListener refreshScopeRefreshedEventListener(ConfigurableEnvironment environment,
+			EncryptablePropertySourceConverter converter, Singleton<JasyptEncryptorConfigurationProperties> config) {
+		return new RefreshScopeRefreshedEventListener(environment, converter, config.get());
+	}
+
 }

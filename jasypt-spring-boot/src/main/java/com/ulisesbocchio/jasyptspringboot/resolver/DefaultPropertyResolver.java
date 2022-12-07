@@ -16,37 +16,40 @@ import java.util.Optional;
  */
 public class DefaultPropertyResolver implements EncryptablePropertyResolver {
 
-    private final Environment environment;
-    private StringEncryptor encryptor;
-    private EncryptablePropertyDetector detector;
+	private final Environment environment;
 
-    public DefaultPropertyResolver(StringEncryptor encryptor, Environment environment) {
-        this(encryptor, new DefaultPropertyDetector(), environment);
-    }
+	private StringEncryptor encryptor;
 
-    public DefaultPropertyResolver(StringEncryptor encryptor, EncryptablePropertyDetector detector, Environment environment) {
-        this.environment = environment;
-        Assert.notNull(encryptor, "String encryptor can't be null");
-        Assert.notNull(detector, "Encryptable Property detector can't be null");
-        this.encryptor = encryptor;
-        this.detector = detector;
-    }
+	private EncryptablePropertyDetector detector;
 
-    @Override
-    public String resolvePropertyValue(String value) {
-        return Optional.ofNullable(value)
-                .map(environment::resolvePlaceholders)
-                .filter(detector::isEncrypted)
-                .map(resolvedValue -> {
-                    try {
-                        String unwrappedProperty = detector.unwrapEncryptedValue(resolvedValue.trim());
-                        String resolvedProperty = environment.resolvePlaceholders(unwrappedProperty);
-                        return encryptor.decrypt(resolvedProperty);
-                    } catch (EncryptionOperationNotPossibleException e) {
-                        throw new DecryptionException("Unable to decrypt property: " + value + " resolved to: " + resolvedValue + ". Decryption of Properties failed,  make sure encryption/decryption " +
-                                "passwords match", e);
-                    }
-                })
-                .orElse(value);
-    }
+	public DefaultPropertyResolver(StringEncryptor encryptor, Environment environment) {
+		this(encryptor, new DefaultPropertyDetector(), environment);
+	}
+
+	public DefaultPropertyResolver(StringEncryptor encryptor, EncryptablePropertyDetector detector,
+			Environment environment) {
+		this.environment = environment;
+		Assert.notNull(encryptor, "String encryptor can't be null");
+		Assert.notNull(detector, "Encryptable Property detector can't be null");
+		this.encryptor = encryptor;
+		this.detector = detector;
+	}
+
+	@Override
+	public String resolvePropertyValue(String value) {
+		return Optional.ofNullable(value).map(environment::resolvePlaceholders).filter(detector::isEncrypted)
+				.map(resolvedValue -> {
+					try {
+						String unwrappedProperty = detector.unwrapEncryptedValue(resolvedValue.trim());
+						String resolvedProperty = environment.resolvePlaceholders(unwrappedProperty);
+						return encryptor.decrypt(resolvedProperty);
+					}
+					catch (EncryptionOperationNotPossibleException e) {
+						throw new DecryptionException("Unable to decrypt property: " + value + " resolved to: "
+								+ resolvedValue + ". Decryption of Properties failed,  make sure encryption/decryption "
+								+ "passwords match", e);
+					}
+				}).orElse(value);
+	}
+
 }

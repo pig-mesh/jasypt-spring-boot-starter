@@ -13,8 +13,8 @@ import java.util.Base64;
 import java.util.Optional;
 
 /**
- * High level configuration class that provides a fallback mechanism to load private/public keys from three different
- * sources in the following order:
+ * High level configuration class that provides a fallback mechanism to load
+ * private/public keys from three different sources in the following order:
  * <p>
  * A Spring Resource
  * <p>
@@ -29,38 +29,45 @@ import java.util.Optional;
 @NoArgsConstructor
 public class SimpleAsymmetricConfig {
 
-    private String privateKey = null;
-    private String publicKey = null;
-    private String privateKeyLocation = null;
-    private String publicKeyLocation = null;
-    private Resource privateKeyResource = null;
-    private Resource publicKeyResource = null;
-    private ResourceLoader resourceLoader = new DefaultResourceLoader();
-    private KeyFormat privateKeyFormat = KeyFormat.DER;
-    private KeyFormat publicKeyFormat = KeyFormat.DER;
+	private String privateKey = null;
 
-    private Resource loadResource(Resource asResource, String asString, String asLocation, KeyFormat format, String type) {
-        return Optional.ofNullable(asResource)
-                .orElseGet(() ->
-                        Optional.ofNullable(asString)
-                                .map(pk -> (Resource) new ByteArrayResource(format == KeyFormat.DER ? Base64.getDecoder().decode(pk) : pk.getBytes(StandardCharsets.UTF_8)))
-                                .orElseGet(() ->
-                                        Optional.ofNullable(asLocation)
-                                                .map(resourceLoader::getResource)
-                                                .orElseThrow(() -> new IllegalArgumentException("Unable to load " + type + " key. Either resource, key as string, or resource location must be provided"))));
-    }
+	private String publicKey = null;
 
-    public Resource loadPrivateKeyResource() {
-        return loadResource(privateKeyResource, privateKey, privateKeyLocation, privateKeyFormat, "Private");
-    }
+	private String privateKeyLocation = null;
 
-    public Resource loadPublicKeyResource() {
-        return loadResource(publicKeyResource, publicKey, publicKeyLocation, publicKeyFormat, "Public");
-    }
+	private String publicKeyLocation = null;
 
-    public void setKeyFormat(KeyFormat keyFormat) {
-        setPublicKeyFormat(keyFormat);
-        setPrivateKeyFormat(keyFormat);
-    }
+	private Resource privateKeyResource = null;
+
+	private Resource publicKeyResource = null;
+
+	private ResourceLoader resourceLoader = new DefaultResourceLoader();
+
+	private KeyFormat privateKeyFormat = KeyFormat.DER;
+
+	private KeyFormat publicKeyFormat = KeyFormat.DER;
+
+	private Resource loadResource(Resource asResource, String asString, String asLocation, KeyFormat format,
+			String type) {
+		return Optional.ofNullable(asResource).orElseGet(() -> Optional.ofNullable(asString)
+				.map(pk -> (Resource) new ByteArrayResource(
+						format == KeyFormat.DER ? Base64.getDecoder().decode(pk) : pk.getBytes(StandardCharsets.UTF_8)))
+				.orElseGet(() -> Optional.ofNullable(asLocation).map(resourceLoader::getResource)
+						.orElseThrow(() -> new IllegalArgumentException("Unable to load " + type
+								+ " key. Either resource, key as string, or resource location must be provided"))));
+	}
+
+	public Resource loadPrivateKeyResource() {
+		return loadResource(privateKeyResource, privateKey, privateKeyLocation, privateKeyFormat, "Private");
+	}
+
+	public Resource loadPublicKeyResource() {
+		return loadResource(publicKeyResource, publicKey, publicKeyLocation, publicKeyFormat, "Public");
+	}
+
+	public void setKeyFormat(KeyFormat keyFormat) {
+		setPublicKeyFormat(keyFormat);
+		setPrivateKeyFormat(keyFormat);
+	}
 
 }

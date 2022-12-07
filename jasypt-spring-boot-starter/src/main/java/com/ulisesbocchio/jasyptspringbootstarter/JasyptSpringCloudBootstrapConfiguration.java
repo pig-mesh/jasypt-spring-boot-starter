@@ -6,11 +6,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Bootstrap configuration applicable only in spring-cloud environments. Can
- * be explicitly turned-off by <code>jasypt.encryptor.bootstrap=false</code>
- * configuration (in bootstrap.properties or as a command line argument) in that case
- * Jasypt will be auto-configured as usual.
- * 
+ * Bootstrap configuration applicable only in spring-cloud environments. Can be explicitly
+ * turned-off by <code>jasypt.encryptor.bootstrap=false</code> configuration (in
+ * bootstrap.properties or as a command line argument) in that case Jasypt will be
+ * auto-configured as usual.
+ *
  * @author Fahim Farook
  *
  */
